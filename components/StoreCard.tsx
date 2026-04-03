@@ -7,11 +7,11 @@ import {
   Image,
 } from 'react-native';
 import { Star, Clock, Heart } from 'lucide-react-native';
-import { Store } from '@/services/storeService';
+import { Loja } from '@/types';
 import { useFavorites } from '@/contexts/FavoritesContext';
 
 interface StoreCardProps {
-  store: Store;
+  store: Loja;
   isFavorite: boolean;
   onPress: () => void;
 }
@@ -27,7 +27,7 @@ export default function StoreCard({ store, isFavorite, onPress }: StoreCardProps
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <View style={styles.imageContainer}>
-        <Image source={{ uri: store.image }} style={styles.image} />
+        <Image source={{ uri: store.imagemUrl }} style={styles.image} />
         <TouchableOpacity 
           style={styles.favoriteButton}
           onPress={handleFavoritePress}
@@ -38,7 +38,7 @@ export default function StoreCard({ store, isFavorite, onPress }: StoreCardProps
             fill={isFavorite ? "#E11D48" : "transparent"}
           />
         </TouchableOpacity>
-        {!store.isOpen && (
+        {!store.estaAberta && (
           <View style={styles.closedOverlay}>
             <Text style={styles.closedText}>Fechado</Text>
           </View>
@@ -46,22 +46,22 @@ export default function StoreCard({ store, isFavorite, onPress }: StoreCardProps
       </View>
       
       <View style={styles.content}>
-        <Text style={styles.name} numberOfLines={1}>{store.name}</Text>
-        <Text style={styles.description} numberOfLines={2}>{store.description}</Text>
+        <Text style={styles.name} numberOfLines={1}>{store.nome}</Text>
+        <Text style={styles.description} numberOfLines={2}>{store.descricao}</Text>
         
         <View style={styles.info}>
           <View style={styles.rating}>
             <Star size={14} color="#FCD34D" fill="#FCD34D" />
-            <Text style={styles.ratingText}>{store.rating}</Text>
+            <Text style={styles.ratingText}>{store.avaliacao}</Text>
           </View>
           
           <View style={styles.status}>
-            <Clock size={14} color={store.isOpen ? "#10B981" : "#EF4444"} />
+            <Clock size={14} color={store.estaAberta ? "#10B981" : "#EF4444"} />
             <Text style={[
               styles.statusText,
-              { color: store.isOpen ? "#10B981" : "#EF4444" }
+              { color: store.estaAberta ? "#10B981" : "#EF4444" }
             ]}>
-              {store.isOpen ? "Aberto" : "Fechado"}
+              {store.estaAberta ? "Aberto" : "Fechado"}
             </Text>
           </View>
         </View>

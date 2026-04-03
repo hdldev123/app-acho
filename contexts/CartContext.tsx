@@ -1,21 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-export interface CartItem {
-  id: string;
-  storeId: string;
-  storeName: string;
-  name: string;
-  image: string;
-  price: number;
-  quantity: number;
-}
+import { ItemCarrinho } from '@/types';
 
 interface CartContextData {
-  cartItems: CartItem[];
-  addToCart: (item: Omit<CartItem, 'quantity'>) => void;
-  removeFromCart: (productId: string, storeId: string) => void;
-  updateQuantity: (productId: string, storeId: string, quantity: number) => void;
+  cartItems: ItemCarrinho[];
+  addToCart: (item: Omit<ItemCarrinho, 'quantidade'>) => void;
+  removeFromCart: (produtoId: string, lojaId: string) => void;
+  updateQuantity: (produtoId: string, lojaId: string, quantidade: number) => void;
   clearCart: () => void;
   getCartTotal: () => number;
   getTotalItems: () => number;
@@ -24,7 +15,7 @@ interface CartContextData {
 const CartContext = createContext<CartContextData>({} as CartContextData);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartItems, setCartItems] = useState<ItemCarrinho[]>([]);
 
   useEffect(() => {
     loadCart();
@@ -53,42 +44,42 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const addToCart = (item: Omit<CartItem, 'quantity'>) => {
+  const addToCart = (item: Omit<ItemCarrinho, 'quantidade'>) => {
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(
-        i => i.id === item.id && i.storeId === item.storeId
+      const existing = prevItems.find(
+        i => i.produtoId === item.produtoId && i.lojaId === item.lojaId,
       );
 
-      if (existingItem) {
+      if (existing) {
         return prevItems.map(i =>
-          i.id === item.id && i.storeId === item.storeId
-            ? { ...i, quantity: i.quantity + 1 }
-            : i
+          i.produtoId === item.produtoId && i.lojaId === item.lojaId
+            ? { ...i, quantidade: i.quantidade + 1 }
+            : i,
         );
       }
 
-      return [...prevItems, { ...item, quantity: 1 }];
+      return [...prevItems, { ...item, quantidade: 1 }];
     });
   };
 
-  const removeFromCart = (productId: string, storeId: string) => {
+  const removeFromCart = (produtoId: string, lojaId: string) => {
     setCartItems(prevItems =>
-      prevItems.filter(item => !(item.id === productId && item.storeId === storeId))
+      prevItems.filter(item => !(item.produtoId === produtoId && item.lojaId === lojaId)),
     );
   };
 
-  const updateQuantity = (productId: string, storeId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(productId, storeId);
+  const updateQuantity = (produtoId: string, lojaId: string, quantidade: number) => {
+    if (quantidade <= 0) {
+      removeFromCart(produtoId, lojaId);
       return;
     }
 
     setCartItems(prevItems =>
       prevItems.map(item =>
-        item.id === productId && item.storeId === storeId
-          ? { ...item, quantity }
-          : item
-      )
+        item.produtoId === produtoId && item.lojaId === lojaId
+          ? { ...item, quantidade }
+          : item,
+      ),
     );
   };
 
@@ -97,11 +88,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const getCartTotal = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cartItems.reduce((total, item) => total + item.preco * item.quantidade, 0);
   };
 
   const getTotalItems = () => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0);
+    return cartItems.reduce((total, item) => total + item.quantidade, 0);
   };
 
   return (

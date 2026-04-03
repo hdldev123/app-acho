@@ -9,14 +9,15 @@ import {
 } from 'react-native';
 import { Heart } from 'lucide-react-native';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import { getStoresByIds, Store } from '@/services/storeService';
+import { getFavoritos } from '@/services/favoritesService';
+import { Loja } from '@/types';
 import { router } from 'expo-router';
 import StoreCard from '@/components/StoreCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function FavoritesScreen() {
   const { favorites } = useFavorites();
-  const [favoriteStores, setFavoriteStores] = useState<Store[]>([]);
+  const [favoriteStores, setFavoriteStores] = useState<Loja[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -32,8 +33,8 @@ export default function FavoritesScreen() {
     }
 
     try {
-      const stores = await getStoresByIds(favorites);
-      setFavoriteStores(stores);
+      const lojas = await getFavoritos();
+      setFavoriteStores(lojas);
     } catch (error) {
       console.error('Erro ao carregar lojas favoritas:', error);
     } finally {

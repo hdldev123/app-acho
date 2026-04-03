@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { ArrowLeft, Star, Clock, MapPin, Phone, Plus, Heart } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { getStoreById, Store, Product } from '@/services/storeService';
+import { getLojaById } from '@/services/storeService';
+import { Loja, Produto } from '@/types';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -20,7 +21,7 @@ export default function StoreDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { addToCart } = useCart();
   const { favorites, toggleFavorite } = useFavorites();
-  const [store, setStore] = useState<Store | null>(null);
+  const [store, setStore] = useState<Loja | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function StoreDetailsScreen() {
 
   const loadStore = async () => {
     try {
-      const storeData = await getStoreById(id!);
+      const storeData = await getLojaById(id!);
       setStore(storeData);
     } catch (error) {
       console.error('Erro ao carregar loja:', error);
@@ -41,19 +42,19 @@ export default function StoreDetailsScreen() {
     }
   };
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (product: Produto) => {
     if (!store) return;
 
     addToCart({
-      id: product.id,
-      storeId: store.id,
-      storeName: store.name,
-      name: product.name,
-      image: product.image,
-      price: product.price,
+      produtoId: product.id,
+      lojaId: store.id,
+      nomeLoja: store.nome,
+      nomeProduto: product.nome,
+      imagemUrl: product.imagemUrl,
+      preco: product.preco,
     });
 
-    Alert.alert('Adicionado!', `${product.name} foi adicionado ao carrinho.`);
+    Alert.alert('Adicionado!', `${product.nome} foi adicionado ao carrinho.`);
   };
 
   const handleFavoritePress = () => {
@@ -93,7 +94,7 @@ export default function StoreDetailsScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header Image */}
         <View style={styles.headerImageContainer}>
-          <Image source={{ uri: store.image }} style={styles.headerImage} />
+          <Image source={{ uri: store.imagemUrl }} style={styles.headerImage} />
           
           {/* Header Controls */}
           <View style={styles.headerControls}>
@@ -117,7 +118,7 @@ export default function StoreDetailsScreen() {
           </View>
 
           {/* Store Status */}
-          {!store.isOpen && (
+          {!store.estaAberta && (
             <View style={styles.closedBanner}>
               <Text style={styles.closedBannerText}>Loja Fechada</Text>
             </View>
@@ -126,22 +127,22 @@ export default function StoreDetailsScreen() {
 
         {/* Store Info */}
         <View style={styles.storeInfo}>
-          <Text style={styles.storeName}>{store.name}</Text>
-          <Text style={styles.storeDescription}>{store.description}</Text>
+          <Text style={styles.storeName}>{store.nome}</Text>
+          <Text style={styles.storeDescription}>{store.descricao}</Text>
           
           <View style={styles.storeDetails}>
             <View style={styles.detail}>
               <Star size={16} color="#FCD34D" fill="#FCD34D" />
-              <Text style={styles.detailText}>{store.rating} estrelas</Text>
+              <Text style={styles.detailText}>{store.avaliacao} estrelas</Text>
             </View>
             
             <View style={styles.detail}>
-              <Clock size={16} color={store.isOpen ? "#10B981" : "#EF4444"} />
+              <Clock size={16} color={store.estaAberta ? "#10B981" : "#EF4444"} />
               <Text style={[
                 styles.detailText,
-                { color: store.isOpen ? "#10B981" : "#EF4444" }
+                { color: store.estaAberta ? "#10B981" : "#EF4444" }
               ]}>
-                {store.isOpen ? "Aberto agora" : "Fechado"}
+                {store.estaAberta ? "Aberto agora" : "Fechado"}
               </Text>
             </View>
           </View>
@@ -149,12 +150,12 @@ export default function StoreDetailsScreen() {
           <View style={styles.contactInfo}>
             <View style={styles.detail}>
               <MapPin size={16} color="#6B7280" />
-              <Text style={styles.detailText}>{store.address}</Text>
+              <Text style={styles.detailText}>{store.endereco}</Text>
             </View>
             
             <View style={styles.detail}>
               <Phone size={16} color="#6B7280" />
-              <Text style={styles.detailText}>{store.phone}</Text>
+              <Text style={styles.detailText}>{store.telefone}</Text>
             </View>
           </View>
         </View>
@@ -163,29 +164,30 @@ export default function StoreDetailsScreen() {
         <View style={styles.productsSection}>
           <Text style={styles.sectionTitle}>Produtos</Text>
           
-          {store.products.length === 0 ? (
+          {(store.produtos ?? []).length === 0 ? (
             <Text style={styles.emptyText}>Nenhum produto disponível</Text>
           ) : (
-            <View style={styles.productsList}>
-              {store.products.map((product) => (
+            <View style={styles.productsList}
+            >
+              {(store.produtos ?? []).map((product: Produto) => (
                 <View key={product.id} style={styles.productCard}>
-                  <Image source={{ uri: product.image }} style={styles.productImage} />
+                  <Image source={{ uri: product.imagemUrl }} style={styles.productImage} />
                   
                   <View style={styles.productInfo}>
-                    <Text style={styles.productName}>{product.name}</Text>
+                    <Text style={styles.productName}>{product.nome}</Text>
                     <Text style={styles.productDescription} numberOfLines={2}>
-                      {product.description}
+                      {product.descricao}
                     </Text>
-                    <Text style={styles.productPrice}>{formatPrice(product.price)}</Text>
+                    <Text style={styles.productPrice}>{formatPrice(product.preco)}</Text>
                   </View>
 
                   <TouchableOpacity
                     style={[
                       styles.addButton,
-                      !store.isOpen && styles.addButtonDisabled
+                      !store.estaAberta && styles.addButtonDisabled
                     ]}
                     onPress={() => handleAddToCart(product)}
-                    disabled={!store.isOpen}
+                    disabled={!store.estaAberta}
                   >
                     <Plus size={20} color="#FFFFFF" />
                   </TouchableOpacity>

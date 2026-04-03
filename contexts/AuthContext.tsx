@@ -1,102 +1,83 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  address?: string;
-}
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  User as FirebaseUser,
+} from 'firebase/auth';
+import { auth } from '@/services/firebase';
+import { getMeuPerfil } from '@/services/userService';
+import { Usuario } from '@/types';
 
 interface AuthContextData {
-  user: User | null;
+  /** Dados do perfil vindos da API .NET */
+  usuario: Usuario | null;
+  /** Usuário raw do Firebase Auth (para tokens, etc.) */
+  firebaseUser: FirebaseUser | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string, phone?: string, address?: string) => Promise<void>;
-  signOut: () => void;
-  updateUser: (userData: Partial<User>) => Promise<void>;
+  signUp: (email: string, password: string, name: string) => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadStoredUser();
+    // Listener do Firebase Auth — dispara em login/logout/refresh
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      setFirebaseUser(fbUser);
+
+      if (fbUser) {
+        try {
+          // Busca o perfil completo na API .NET
+          const perfil = await getMeuPerfil();
+          setUsuario(perfil);
+        } catch (error) {
+          console.error('Erro ao carregar perfil do usuário:', error);
+          setUsuario(null);
+        }
+      } else {
+        setUsuario(null);
+      }
+
+      setLoading(false);
+    });
+
+    return unsubscribe;
   }, []);
 
-  const loadStoredUser = async () => {
-    try {
-      const storedUser = await AsyncStorage.getItem('@acho:user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-      }
-    } catch (error) {
-      console.error('Erro ao carregar usuário:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const signIn = async (email: string, password: string) => {
-    // Simulação de autenticação - em produção, usar Firebase Auth
-    const mockUser: User = {
-      id: '1',
-      name: 'Usuário Demo',
-      email,
-      phone: '(11) 99999-9999',
-      address: 'Rua Demo, 123 - Bairro Demo, Cidade Demo',
-    };
-
-    setUser(mockUser);
-    await AsyncStorage.setItem('@acho:user', JSON.stringify(mockUser));
+    await signInWithEmailAndPassword(auth, email, password);
+    // O listener onAuthStateChanged cuida do resto
   };
 
-  const signUp = async (
-    email: string,
-    password: string,
-    name: string,
-    phone?: string,
-    address?: string
-  ) => {
-    // Simulação de registro - em produção, usar Firebase Auth
-    const newUser: User = {
-      id: Date.now().toString(),
-      name,
-      email,
-      phone,
-      address,
-    };
-
-    setUser(newUser);
-    await AsyncStorage.setItem('@acho:user', JSON.stringify(newUser));
+  const signUp = async (email: string, password: string, _name: string) => {
+    await createUserWithEmailAndPassword(auth, email, password);
+    // Após criar no Firebase, o backend .NET criará o registro
+    // do usuário automaticamente no primeiro request autenticado,
+    // ou você pode chamar a API de cadastro aqui se necessário.
   };
 
   const signOut = async () => {
-    setUser(null);
-    await AsyncStorage.removeItem('@acho:user');
-  };
-
-  const updateUser = async (userData: Partial<User>) => {
-    if (!user) return;
-
-    const updatedUser = { ...user, ...userData };
-    setUser(updatedUser);
-    await AsyncStorage.setItem('@acho:user', JSON.stringify(updatedUser));
+    await firebaseSignOut(auth);
+    setUsuario(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
-        user,
+        usuario,
+        firebaseUser,
         loading,
         signIn,
         signUp,
         signOut,
-        updateUser,
       }}
     >
       {children}

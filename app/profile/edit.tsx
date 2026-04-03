@@ -13,14 +13,15 @@ import {
 import { ArrowLeft, User, Mail, Phone, MapPin } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { atualizarPerfil } from '@/services/userService';
 
 export default function EditProfileScreen() {
-  const { user, updateUser } = useAuth();
+  const { usuario } = useAuth();
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    address: user?.address || '',
+    nome: usuario?.nome || '',
+    email: usuario?.email || '',
+    telefone: usuario?.telefone || '',
+    endereco: usuario?.endereco || '',
   });
   const [loading, setLoading] = useState(false);
 
@@ -29,7 +30,7 @@ export default function EditProfileScreen() {
   };
 
   const handleSave = async () => {
-    if (!formData.name.trim()) {
+    if (!formData.nome.trim()) {
       Alert.alert('Erro', 'Por favor, informe seu nome.');
       return;
     }
@@ -46,11 +47,11 @@ export default function EditProfileScreen() {
 
     setLoading(true);
     try {
-      await updateUser({
-        name: formData.name.trim(),
+      await atualizarPerfil({
+        nome: formData.nome.trim(),
         email: formData.email.trim(),
-        phone: formData.phone.trim(),
-        address: formData.address.trim(),
+        telefone: formData.telefone.trim(),
+        endereco: formData.endereco.trim(),
       });
 
       Alert.alert('Sucesso', 'Perfil atualizado com sucesso!', [
@@ -85,8 +86,8 @@ export default function EditProfileScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Seu nome completo"
-                value={formData.name}
-                onChangeText={(value) => updateField('name', value)}
+                value={formData.nome}
+                onChangeText={(value) => updateField('nome', value)}
                 autoCapitalize="words"
                 placeholderTextColor="#9CA3AF"
               />
@@ -117,8 +118,8 @@ export default function EditProfileScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="(11) 99999-9999"
-                value={formData.phone}
-                onChangeText={(value) => updateField('phone', value)}
+                value={formData.telefone}
+                onChangeText={(value) => updateField('telefone', value)}
                 keyboardType="phone-pad"
                 placeholderTextColor="#9CA3AF"
               />
@@ -132,8 +133,8 @@ export default function EditProfileScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Rua, número, bairro, cidade"
-                value={formData.address}
-                onChangeText={(value) => updateField('address', value)}
+                value={formData.endereco}
+                onChangeText={(value) => updateField('endereco', value)}
                 multiline
                 placeholderTextColor="#9CA3AF"
               />

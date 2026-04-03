@@ -14,7 +14,8 @@ import { Search, MapPin, Star, Clock } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
-import { getStores, Store } from '@/services/storeService';
+import { getLojas } from '@/services/storeService';
+import { Loja } from '@/types';
 import StoreCard from '@/components/StoreCard';
 import CategoryFilter from '@/components/CategoryFilter';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -29,10 +30,10 @@ const CATEGORIES = [
 ];
 
 export default function HomeScreen() {
-  const { user } = useAuth();
+  const { usuario } = useAuth();
   const { favorites } = useFavorites();
-  const [stores, setStores] = useState<Store[]>([]);
-  const [filteredStores, setFilteredStores] = useState<Store[]>([]);
+  const [stores, setStores] = useState<Loja[]>([]);
+  const [filteredStores, setFilteredStores] = useState<Loja[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,8 +49,8 @@ export default function HomeScreen() {
 
   const loadStores = async () => {
     try {
-      const storesData = await getStores();
-      setStores(storesData);
+      const result = await getLojas();
+      setStores(result.itens);
     } catch (error) {
       console.error('Erro ao carregar lojas:', error);
     } finally {
@@ -67,13 +68,13 @@ export default function HomeScreen() {
     let filtered = stores;
 
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(store => store.category === selectedCategory);
+      filtered = filtered.filter(store => store.categoria === selectedCategory);
     }
 
     if (searchQuery.trim()) {
       filtered = filtered.filter(store =>
-        store.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        store.category.toLowerCase().includes(searchQuery.toLowerCase())
+        store.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        store.categoria.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -103,7 +104,7 @@ export default function HomeScreen() {
             <Text style={styles.locationText}>Sua localização</Text>
           </View>
           <Text style={styles.welcomeText}>
-            Olá, {user?.name || 'Usuário'}! 👋
+            Olá, {usuario?.nome || 'Usuário'}! 👋
           </Text>
         </View>
 
@@ -140,12 +141,12 @@ export default function HomeScreen() {
                     style={styles.featuredCard}
                     onPress={() => handleStorePress(store.id)}
                   >
-                    <Image source={{ uri: store.image }} style={styles.featuredImage} />
+                    <Image source={{ uri: store.imagemUrl }} style={styles.featuredImage} />
                     <View style={styles.featuredOverlay}>
-                      <Text style={styles.featuredName}>{store.name}</Text>
+                      <Text style={styles.featuredName}>{store.nome}</Text>
                       <View style={styles.featuredInfo}>
                         <Star size={12} color="#FCD34D" fill="#FCD34D" />
-                        <Text style={styles.featuredRating}>{store.rating}</Text>
+                        <Text style={styles.featuredRating}>{store.avaliacao}</Text>
                       </View>
                     </View>
                   </TouchableOpacity>

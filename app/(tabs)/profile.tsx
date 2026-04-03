@@ -13,7 +13,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function ProfileScreen() {
-  const { user, signOut } = useAuth();
+  const { usuario, signOut } = useAuth();
 
   const handleSignOut = () => {
     Alert.alert(
@@ -52,8 +52,8 @@ export default function ProfileScreen() {
               <User size={32} color="#FFFFFF" />
             </View>
           </View>
-          <Text style={styles.userName}>{user?.name || 'Usuário'}</Text>
-          <Text style={styles.userEmail}>{user?.email}</Text>
+          <Text style={styles.userName}>{usuario?.nome || 'Usuário'}</Text>
+          <Text style={styles.userEmail}>{usuario?.email}</Text>
           
           <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
             <Text style={styles.editButtonText}>Editar Perfil</Text>
@@ -69,26 +69,26 @@ export default function ProfileScreen() {
               <Mail size={20} color="#6B7280" />
               <View style={styles.infoText}>
                 <Text style={styles.infoLabel}>Email</Text>
-                <Text style={styles.infoValue}>{user?.email}</Text>
+                <Text style={styles.infoValue}>{usuario?.email}</Text>
               </View>
             </View>
 
-            {user?.phone && (
+            {usuario?.telefone && (
               <View style={styles.infoItem}>
                 <Phone size={20} color="#6B7280" />
                 <View style={styles.infoText}>
                   <Text style={styles.infoLabel}>Telefone</Text>
-                  <Text style={styles.infoValue}>{user.phone}</Text>
+                  <Text style={styles.infoValue}>{usuario.telefone}</Text>
                 </View>
               </View>
             )}
 
-            {user?.address && (
+            {usuario?.endereco && (
               <View style={styles.infoItem}>
                 <MapPin size={20} color="#6B7280" />
                 <View style={styles.infoText}>
                   <Text style={styles.infoLabel}>Endereço</Text>
-                  <Text style={styles.infoValue}>{user.address}</Text>
+                  <Text style={styles.infoValue}>{usuario.endereco}</Text>
                 </View>
               </View>
             )}

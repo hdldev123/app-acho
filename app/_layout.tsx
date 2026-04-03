@@ -13,7 +13,7 @@ import { analytics } from '@/utils/analytics';
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
-  const { user, loading } = useAuth();
+  const { usuario, loading } = useAuth();
   const segments = useSegments();
 
   useEffect(() => {
@@ -21,11 +21,11 @@ function RootLayoutNav() {
 
     const inAuthGroup = segments[0] === 'auth';
 
-    if (!user && !inAuthGroup) {
+    if (!usuario && !inAuthGroup) {
       // Redirect to auth if user is not authenticated and not in auth group
       analytics.trackScreenView('auth_redirect');
       router.replace('/auth');
-    } else if (user && inAuthGroup) {
+    } else if (usuario && inAuthGroup) {
       // Redirect to tabs if user is authenticated and in auth group
       analytics.trackScreenView('home_redirect');
       router.replace('/(tabs)');
@@ -33,7 +33,7 @@ function RootLayoutNav() {
 
     // Hide splash screen once authentication state is determined
     SplashScreen.hideAsync();
-  }, [user, loading, segments]);
+  }, [usuario, loading, segments]);
 
   // Track screen changes
   useEffect(() => {

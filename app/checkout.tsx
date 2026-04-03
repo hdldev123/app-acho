@@ -13,7 +13,7 @@ import { ArrowLeft, MapPin, CreditCard, Smartphone, DollarSign, MessageSquare } 
 import { router } from 'expo-router';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { createOrder } from '@/services/orderService';
+import { criarPedido } from '@/services/orderService';
 
 const PAYMENT_METHODS = [
   { id: 'pix', name: 'PIX', icon: Smartphone, description: 'Pagamento instantâneo' },
@@ -22,10 +22,10 @@ const PAYMENT_METHODS = [
 ];
 
 export default function CheckoutScreen() {
-  const { user } = useAuth();
+  const { usuario } = useAuth();
   const { cartItems, getCartTotal, clearCart } = useCart();
   const [selectedPayment, setSelectedPayment] = useState('pix');
-  const [deliveryAddress, setDeliveryAddress] = useState(user?.address || '');
+  const [deliveryAddress, setDeliveryAddress] = useState(usuario?.endereco || '');
   const [observations, setObservations] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -45,15 +45,15 @@ export default function CheckoutScreen() {
 
     setLoading(true);
     try {
-      const orderId = await createOrder({
-        userId: user!.id,
-        items: cartItems,
-        paymentMethod: selectedPayment,
-        deliveryAddress: deliveryAddress.trim(),
-        observations: observations.trim(),
-        subtotal,
-        deliveryFee,
-        total,
+      const pedido = await criarPedido({
+        lojaId: cartItems[0]?.lojaId || '',
+        itens: cartItems.map(item => ({
+          produtoId: item.produtoId,
+          quantidade: item.quantidade,
+        })),
+        metodoPagamento: selectedPayment,
+        enderecoEntrega: deliveryAddress.trim(),
+        observacoes: observations.trim() || undefined,
       });
 
       clearCart();
@@ -63,7 +63,7 @@ export default function CheckoutScreen() {
         [
           {
             text: 'Ver pedido',
-            onPress: () => router.replace(`/order/${orderId}`),
+            onPress: () => router.replace(`/order/${pedido.id}`),
           },
         ]
       );
@@ -153,12 +153,12 @@ export default function CheckoutScreen() {
           <Text style={styles.sectionTitle}>📋 Resumo do Pedido</Text>
           <View style={styles.summaryCard}>
             {cartItems.map((item) => (
-              <View key={`${item.id}-${item.storeId}`} style={styles.summaryItem}>
+              <View key={`${item.produtoId}-${item.lojaId}`} style={styles.summaryItem}>
                 <Text style={styles.summaryItemName}>
-                  {item.quantity}x {item.name}
+                  {item.quantidade}x {item.nomeProduto}
                 </Text>
                 <Text style={styles.summaryItemPrice}>
-                  {formatPrice(item.price * item.quantity)}
+                  {formatPrice(item.preco * item.quantidade)}
                 </Text>
               </View>
             ))}

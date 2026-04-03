@@ -22,7 +22,7 @@ export default function Toast({
   duration = 3000 
 }: ToastProps) {
   const slideAnim = useRef(new Animated.Value(-100)).current;
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
     if (visible) {

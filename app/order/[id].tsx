@@ -11,41 +11,42 @@ import {
 } from 'react-native';
 import { ArrowLeft, Clock, CircleCheck as CheckCircle, Truck, Package, MapPin, Phone } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { getOrderById, Order, OrderStatus } from '@/services/orderService';
+import { getPedidoById, StatusPedido } from '@/services/orderService';
+import { Pedido } from '@/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 const ORDER_STATUS_CONFIG = {
-  [OrderStatus.PENDING]: {
+  [StatusPedido.PENDENTE]: {
     icon: Clock,
     color: '#F59E0B',
     title: 'Pedido Recebido',
     description: 'Aguardando confirmação da loja',
   },
-  [OrderStatus.CONFIRMED]: {
+  [StatusPedido.CONFIRMADO]: {
     icon: CheckCircle,
     color: '#10B981',
     title: 'Pedido Confirmado',
     description: 'A loja confirmou seu pedido',
   },
-  [OrderStatus.PREPARING]: {
+  [StatusPedido.PREPARANDO]: {
     icon: Package,
     color: '#3B82F6',
     title: 'Em Preparo',
     description: 'Sua compra está sendo preparada',
   },
-  [OrderStatus.OUT_FOR_DELIVERY]: {
+  [StatusPedido.SAIU_PARA_ENTREGA]: {
     icon: Truck,
     color: '#8B5CF6',
     title: 'Saiu para Entrega',
     description: 'Seu pedido está a caminho',
   },
-  [OrderStatus.DELIVERED]: {
+  [StatusPedido.ENTREGUE]: {
     icon: CheckCircle,
     color: '#10B981',
     title: 'Entregue',
     description: 'Pedido entregue com sucesso',
   },
-  [OrderStatus.CANCELLED]: {
+  [StatusPedido.CANCELADO]: {
     icon: Clock,
     color: '#EF4444',
     title: 'Cancelado',
@@ -55,7 +56,7 @@ const ORDER_STATUS_CONFIG = {
 
 export default function OrderDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<Pedido | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -67,7 +68,7 @@ export default function OrderDetailsScreen() {
 
   const loadOrder = async () => {
     try {
-      const orderData = await getOrderById(id!);
+      const orderData = await getPedidoById(id!);
       setOrder(orderData);
     } catch (error) {
       console.error('Erro ao carregar pedido:', error);
@@ -86,14 +87,14 @@ export default function OrderDetailsScreen() {
     return `R$ ${price.toFixed(2).replace('.', ',')}`;
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (dateStr: string) => {
     return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-    }).format(date);
+    }).format(new Date(dateStr));
   };
 
   if (loading) {
@@ -146,7 +147,7 @@ export default function OrderDetailsScreen() {
           <Text style={styles.statusTitle}>{statusConfig.title}</Text>
           <Text style={styles.statusDescription}>{statusConfig.description}</Text>
           <Text style={styles.orderDate}>
-            Pedido realizado em {formatDate(order.createdAt)}
+            Pedido realizado em {formatDate(order.criadoEm)}
           </Text>
         </View>
 
@@ -154,17 +155,8 @@ export default function OrderDetailsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🏪 Loja</Text>
           <View style={styles.storeCard}>
-            <Image source={{ uri: order.store.image }} style={styles.storeImage} />
             <View style={styles.storeInfo}>
-              <Text style={styles.storeName}>{order.store.name}</Text>
-              <View style={styles.storeDetail}>
-                <MapPin size={16} color="#6B7280" />
-                <Text style={styles.storeDetailText}>{order.store.address}</Text>
-              </View>
-              <View style={styles.storeDetail}>
-                <Phone size={16} color="#6B7280" />
-                <Text style={styles.storeDetailText}>{order.store.phone}</Text>
-              </View>
+              <Text style={styles.storeName}>{order.nomeLoja}</Text>
             </View>
           </View>
         </View>
@@ -173,14 +165,14 @@ export default function OrderDetailsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📦 Itens do Pedido</Text>
           <View style={styles.itemsCard}>
-            {order.items.map((item) => (
-              <View key={`${item.id}-${item.storeId}`} style={styles.orderItem}>
-                <Image source={{ uri: item.image }} style={styles.itemImage} />
+            {order.itens.map((item) => (
+              <View key={item.id} style={styles.orderItem}>
+                <Image source={{ uri: item.imagemProdutoUrl }} style={styles.itemImage} />
                 <View style={styles.itemInfo}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemPrice}>{formatPrice(item.price)}</Text>
+                  <Text style={styles.itemName}>{item.nomeProduto}</Text>
+                  <Text style={styles.itemPrice}>{formatPrice(item.precoUnitario)}</Text>
                 </View>
-                <Text style={styles.itemQuantity}>x{item.quantity}</Text>
+                <Text style={styles.itemQuantity}>x{item.quantidade}</Text>
               </View>
             ))}
           </View>
@@ -192,20 +184,20 @@ export default function OrderDetailsScreen() {
           <View style={styles.deliveryCard}>
             <View style={styles.deliveryRow}>
               <Text style={styles.deliveryLabel}>Endereço:</Text>
-              <Text style={styles.deliveryValue}>{order.deliveryAddress}</Text>
+              <Text style={styles.deliveryValue}>{order.enderecoEntrega}</Text>
             </View>
             <View style={styles.deliveryRow}>
               <Text style={styles.deliveryLabel}>Pagamento:</Text>
               <Text style={styles.deliveryValue}>
-                {order.paymentMethod === 'pix' && 'PIX'}
-                {order.paymentMethod === 'money' && 'Dinheiro'}
-                {order.paymentMethod === 'card' && 'Cartão na entrega'}
+                {order.metodoPagamento === 'pix' && 'PIX'}
+                {order.metodoPagamento === 'money' && 'Dinheiro'}
+                {order.metodoPagamento === 'card' && 'Cartão na entrega'}
               </Text>
             </View>
-            {order.observations && (
+            {order.observacoes && (
               <View style={styles.deliveryRow}>
                 <Text style={styles.deliveryLabel}>Observações:</Text>
-                <Text style={styles.deliveryValue}>{order.observations}</Text>
+                <Text style={styles.deliveryValue}>{order.observacoes}</Text>
               </View>
             )}
           </View>
@@ -221,7 +213,7 @@ export default function OrderDetailsScreen() {
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Taxa de entrega</Text>
-              <Text style={styles.summaryValue}>{formatPrice(order.deliveryFee)}</Text>
+              <Text style={styles.summaryValue}>{formatPrice(order.taxaEntrega)}</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.summaryRow}>

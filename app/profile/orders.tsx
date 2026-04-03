@@ -12,36 +12,37 @@ import {
 import { ArrowLeft, Clock, CircleCheck as CheckCircle, Truck, Package, ShoppingBag } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { getUserOrders, Order, OrderStatus } from '@/services/orderService';
+import { getMeusPedidos, StatusPedido } from '@/services/orderService';
+import { Pedido } from '@/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 const ORDER_STATUS_CONFIG = {
-  [OrderStatus.PENDING]: {
+  [StatusPedido.PENDENTE]: {
     icon: Clock,
     color: '#F59E0B',
     title: 'Aguardando',
   },
-  [OrderStatus.CONFIRMED]: {
+  [StatusPedido.CONFIRMADO]: {
     icon: CheckCircle,
     color: '#10B981',
     title: 'Confirmado',
   },
-  [OrderStatus.PREPARING]: {
+  [StatusPedido.PREPARANDO]: {
     icon: Package,
     color: '#3B82F6',
     title: 'Preparando',
   },
-  [OrderStatus.OUT_FOR_DELIVERY]: {
+  [StatusPedido.SAIU_PARA_ENTREGA]: {
     icon: Truck,
     color: '#8B5CF6',
     title: 'A caminho',
   },
-  [OrderStatus.DELIVERED]: {
+  [StatusPedido.ENTREGUE]: {
     icon: CheckCircle,
     color: '#10B981',
     title: 'Entregue',
   },
-  [OrderStatus.CANCELLED]: {
+  [StatusPedido.CANCELADO]: {
     icon: Clock,
     color: '#EF4444',
     title: 'Cancelado',
@@ -49,23 +50,23 @@ const ORDER_STATUS_CONFIG = {
 };
 
 export default function OrderHistoryScreen() {
-  const { user } = useAuth();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const { usuario } = useAuth();
+  const [orders, setOrders] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    if (usuario) {
       loadOrders();
     }
-  }, [user]);
+  }, [usuario]);
 
   const loadOrders = async () => {
-    if (!user) return;
+    if (!usuario) return;
 
     try {
-      const userOrders = await getUserOrders(user.id);
-      setOrders(userOrders);
+      const result = await getMeusPedidos();
+      setOrders(result.itens);
     } catch (error) {
       console.error('Erro ao carregar pedidos:', error);
     } finally {
@@ -83,12 +84,12 @@ export default function OrderHistoryScreen() {
     return `R$ ${price.toFixed(2).replace('.', ',')}`;
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (dateStr: string) => {
     return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
-    }).format(date);
+    }).format(new Date(dateStr));
   };
 
   const handleOrderPress = (orderId: string) => {
@@ -146,7 +147,7 @@ export default function OrderHistoryScreen() {
                 <View style={styles.orderHeader}>
                   <View style={styles.orderInfo}>
                     <Text style={styles.orderId}>Pedido #{order.id.slice(-6)}</Text>
-                    <Text style={styles.orderDate}>{formatDate(order.createdAt)}</Text>
+                    <Text style={styles.orderDate}>{formatDate(order.criadoEm)}</Text>
                   </View>
                   <View style={[styles.statusBadge, { backgroundColor: statusConfig.color }]}>
                     <StatusIcon size={16} color="#FFFFFF" />
@@ -155,13 +156,12 @@ export default function OrderHistoryScreen() {
                 </View>
 
                 <View style={styles.storeInfo}>
-                  <Image source={{ uri: order.store.image }} style={styles.storeImage} />
-                  <Text style={styles.storeName}>{order.store.name}</Text>
+                  <Text style={styles.storeName}>{order.nomeLoja}</Text>
                 </View>
 
                 <View style={styles.orderSummary}>
                   <Text style={styles.itemsCount}>
-                    {order.items.length} {order.items.length === 1 ? 'item' : 'itens'}
+                    {order.itens.length} {order.itens.length === 1 ? 'item' : 'itens'}
                   </Text>
                   <Text style={styles.orderTotal}>{formatPrice(order.total)}</Text>
                 </View>

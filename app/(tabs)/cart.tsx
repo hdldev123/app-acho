@@ -79,38 +79,38 @@ export default function CartScreen() {
         <View style={styles.content}>
           <ScrollView style={styles.itemsList} showsVerticalScrollIndicator={false}>
             {cartItems.map((item) => (
-              <View key={`${item.id}-${item.storeId}`} style={styles.cartItem}>
-                <Image source={{ uri: item.image }} style={styles.itemImage} />
+              <View key={`${item.produtoId}-${item.lojaId}`} style={styles.cartItem}>
+                <Image source={{ uri: item.imagemUrl }} style={styles.itemImage} />
                 
                 <View style={styles.itemInfo}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemStore}>{item.storeName}</Text>
-                  <Text style={styles.itemPrice}>{formatPrice(item.price)}</Text>
+                  <Text style={styles.itemName}>{item.nomeProduto}</Text>
+                  <Text style={styles.itemStore}>{item.nomeLoja}</Text>
+                  <Text style={styles.itemPrice}>{formatPrice(item.preco)}</Text>
                 </View>
 
                 <View style={styles.quantityControls}>
                   <TouchableOpacity
                     style={styles.quantityButton}
                     onPress={() => {
-                      if (item.quantity === 1) {
-                        removeFromCart(item.id, item.storeId);
+                      if (item.quantidade === 1) {
+                        removeFromCart(item.produtoId, item.lojaId);
                       } else {
-                        updateQuantity(item.id, item.storeId, item.quantity - 1);
+                        updateQuantity(item.produtoId, item.lojaId, item.quantidade - 1);
                       }
                     }}
                   >
-                    {item.quantity === 1 ? (
+                    {item.quantidade === 1 ? (
                       <Trash2 size={16} color="#EF4444" />
                     ) : (
                       <Minus size={16} color="#6B7280" />
                     )}
                   </TouchableOpacity>
 
-                  <Text style={styles.quantityText}>{item.quantity}</Text>
+                  <Text style={styles.quantityText}>{item.quantidade}</Text>
 
                   <TouchableOpacity
                     style={styles.quantityButton}
-                    onPress={() => updateQuantity(item.id, item.storeId, item.quantity + 1)}
+                    onPress={() => updateQuantity(item.produtoId, item.lojaId, item.quantidade + 1)}
                   >
                     <Plus size={16} color="#6B7280" />
                   </TouchableOpacity>
